@@ -1,6 +1,7 @@
 package org.example.awesome.pizza.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.example.awesome.pizza.domain.Order;
 import org.example.awesome.pizza.exception.BadRequestException;
 import org.example.awesome.pizza.exception.InternalServerErrorException;
@@ -9,6 +10,7 @@ import org.example.awesome.pizza.mapper.OrderMapper;
 import org.example.awesome.pizza.model.OrderDto;
 import org.example.awesome.pizza.model.OrderInternalReq;
 import org.example.awesome.pizza.model.OrderStatus;
+import org.example.awesome.pizza.repository.CustomerRepository;
 import org.example.awesome.pizza.repository.OrderRepository;
 import org.example.awesome.pizza.service.OrderService;
 import org.example.awesome.pizza.state.OrderState;
@@ -25,15 +27,34 @@ import java.util.Optional;
 public class OrderServiceImpl extends BaseService<OrderDto, OrderInternalReq, Order> implements OrderService {
   private final OrderRepository repo;
   private final OrderState orderState;
+  private final CustomerRepository customerRepo;
 
   OrderServiceImpl(
       final OrderRepository repository,
       final OrderState orderState,
+      final CustomerRepository customerRepo,
       final OrderMapper mapper
   ) {
     super(repository, mapper);
     this.repo = repository;
     this.orderState = orderState;
+    this.customerRepo = customerRepo;
+  }
+
+  @Override
+  protected Order prePersist(Order entity, OrderInternalReq orderInternalReq) {
+    if (entity.getCustomer() == null ||
+        (entity.getCustomer().getId() == null &&
+            StringUtils.isBlank(entity.getCustomer().getUsername())))
+      throw new BadRequestException("Order must belong to a Customer");
+
+    Optional.of(entity.getCustomer())
+        .filter(c -> c.getId() != null)
+        .or(() -> customerRepo.findByUsername(entity.getCustomer().getUsername()))
+        .map(c -> customerRepo.getReferenceById(c.getId()))
+        .ifPresent(entity::setCustomer);
+
+    return entity;
   }
 
   /**

@@ -367,8 +367,12 @@ components:
         status:
           $ref: '#/components/schemas/OrderStatus'
           default: CREATED
+        customer:
+          $ref: '#/components/schemas/CustomerRequest'
       required:
         - pizzas
+        - status
+        - customer
     OrderDto:
       allOf:
         - $ref: '#/components/schemas/BaseDto'
@@ -392,6 +396,40 @@ components:
               example: 38.9
             status:
               $ref: '#/components/schemas/OrderStatus'
+            customer:
+              $ref: '#/components/schemas/CustomerDto'
+
+    CustomerRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID of the entity
+          example: 10
+        username:
+          type: string
+          description: Email of the Customer
+          nullable: false
+          example: mario.rossi@mail.it
+        firstName:
+          type: string
+          description: First name of the Customer
+          nullable: false
+          example: Mario
+        lastName:
+          type: string
+          description: Last name of the Customer
+          nullable: false
+          example: Rossi
+      required:
+        - username
+        - firstName
+        - lastName
+    CustomerDto:
+      allOf:
+        - $ref: '#/components/schemas/BaseDto'
+        - $ref: '#/components/schemas/CustomerRequest'
 
   requestBodies:
     Pizza:

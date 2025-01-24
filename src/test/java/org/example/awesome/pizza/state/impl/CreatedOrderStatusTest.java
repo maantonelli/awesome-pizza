@@ -3,7 +3,6 @@ package org.example.awesome.pizza.state.impl;
 import org.assertj.core.api.Assertions;
 import org.example.awesome.pizza.domain.Chef;
 import org.example.awesome.pizza.domain.Order;
-import org.example.awesome.pizza.domain.Pizza;
 import org.example.awesome.pizza.exception.BadRequestException;
 import org.example.awesome.pizza.exception.ForbiddenException;
 import org.example.awesome.pizza.mapper.OrderMapper;

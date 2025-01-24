@@ -11,7 +11,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.mapstruct.NullValueCheckStrategy;
-import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
@@ -27,6 +26,7 @@ public interface OrderMapper extends BaseMapper<OrderDto, OrderInternalReq, Orde
   @Mapping(target = "totalAmount", source = "pizzas", qualifiedByName = "calcTotalAmount")
   OrderDto toDto(final Order order);
 
+  @Mapping(target = "customer", ignore = true)
   @Mapping(target = "pizzas", ignore = true)
   @Mapping(target = "target.chef", source = "source", qualifiedByName = "patchChef")
   void patch(final OrderInternalReq source, @MappingTarget final Order target);

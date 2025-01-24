@@ -1,5 +1,6 @@
 package org.example.awesome.pizza.domain;
 
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 @ToString(callSuper = true)
 @Accessors(chain = true)
 @Entity
+@Table(name = "pizzas")
 public class Pizza extends BaseEntity implements Serializable {
   @Column(nullable = false)
   private String name;

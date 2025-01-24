@@ -3,6 +3,7 @@ package org.example.awesome.pizza.repository;
 import org.assertj.core.api.Assertions;
 import org.example.awesome.pizza.AwesomePizzaApplication;
 import org.example.awesome.pizza.domain.Chef;
+import org.example.awesome.pizza.domain.Customer;
 import org.example.awesome.pizza.domain.Order;
 import org.example.awesome.pizza.domain.Pizza;
 import org.example.awesome.pizza.model.OrderStatus;
@@ -46,15 +47,18 @@ class OrderRepositoryTest {
   private ChefRepository chefRepo;
 
   private Chef chef;
+  private Customer customer;
   private Pizza pizza;
   private Order existing;
 
   @BeforeEach
   void setUp() {
-    chef = new Chef()
-        .setFirstName("FirstName")
-        .setLastName("LastName");
-    chefRepo.save(chef);
+    chef = chefRepo.findByUsername("gennario.esposito@awesomepizza.it")
+        .orElseGet(() -> chefRepo.save((Chef) new Chef()
+            .setUsername("gennario.esposito@awesomepizza.it")
+            .setFirstName("FirstName")
+            .setLastName("LastName"))
+        );
 
     pizza = new Pizza()
         .setName("PizzaName")
@@ -62,8 +66,14 @@ class OrderRepositoryTest {
         .setPrice(BigDecimal.valueOf(6.3));
     pizzaRepo.save(pizza);
 
+    customer = (Customer) new Customer()
+        .setUsername("mario.rossi@test.it")
+        .setFirstName("Mario")
+        .setLastName("Rossi");
+
     existing = new Order()
         .setStatus(OrderStatus.CREATED.name())
+        .setCustomer(customer)
         .setPizzas(List.of(
             pizza
         ));
@@ -166,6 +176,7 @@ class OrderRepositoryTest {
   void canTakeAnyOrder_WhenCookingInDB_ShouldReturnFalse() {
     final Order cooking = new Order()
         .setStatus(OrderStatus.COOKING.name())
+        .setCustomer(customer)
         .setChef((Chef) new Chef().setId(chef.getId()))
         .setPizzas(List.of((Pizza) new Pizza().setId(pizza.getId())));
     repository.save(cooking);

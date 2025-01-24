@@ -8,6 +8,6 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Entity
-@DiscriminatorValue("CHEF")
-public class Chef extends User {
+@DiscriminatorValue("CUSTOMER")
+public class Customer extends User {
 }

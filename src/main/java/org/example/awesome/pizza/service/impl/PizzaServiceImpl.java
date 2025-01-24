@@ -37,4 +37,8 @@ public class PizzaServiceImpl extends BaseService<PizzaDto, PizzaRequest, Pizza>
         .toList();
   }
 
+  @Override
+  protected Pizza prePersist(Pizza entity, PizzaRequest request) {
+    return entity;
+  }
 }

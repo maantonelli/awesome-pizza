@@ -45,11 +45,14 @@ abstract class BaseService<TModel, TRequest, TEntity extends BaseEntity> {
     repository.deleteById(id);
   }
 
+  protected abstract TEntity prePersist(final TEntity entity, final TRequest request);
+
   public TModel save(final TRequest request) {
     if (request == null)
       throw new BadRequestException("No valid input entity to save");
 
     return Optional.of(mapper.toEntity(request))
+        .map(toSave -> this.prePersist(toSave, request))
         .map(repository::save)
         .map(mapper::toDto)
         .orElseThrow(() -> new InternalServerErrorException("Error while inserting entity: %s".formatted(request.toString())));
@@ -64,7 +67,8 @@ abstract class BaseService<TModel, TRequest, TEntity extends BaseEntity> {
 
     mapper.patch(request, entity);
 
-    return Optional.of(repository.save(entity))
+    return Optional.of(this.prePersist(entity, request))
+        .map(repository::save)
         .map(mapper::toDto)
         .orElseThrow(() -> new InternalServerErrorException("Error while updating entity id %d: %s".formatted(id, request.toString())));
   }

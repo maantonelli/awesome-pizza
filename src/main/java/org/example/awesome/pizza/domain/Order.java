@@ -29,11 +29,14 @@ public class Order extends BaseEntity implements Serializable {
   @FromSequence
   private Long code;
   @Column(nullable = false)
-  @ManyToMany(targetEntity = Pizza.class)
+  @ManyToMany(targetEntity = Pizza.class, cascade = {CascadeType.REFRESH})
   private List<Pizza> pizzas = new ArrayList<>();
   @Column(nullable = false)
   private String status;
   @JoinColumn(name = "chef_id", referencedColumnName = "id")
   @ManyToOne(targetEntity = Chef.class, fetch = FetchType.LAZY)
   private Chef chef;
+  @JoinColumn(name = "customer_id", referencedColumnName = "id", nullable = false, updatable = false)
+  @ManyToOne(targetEntity = Customer.class, cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY, optional = false)
+  private Customer customer;
 }

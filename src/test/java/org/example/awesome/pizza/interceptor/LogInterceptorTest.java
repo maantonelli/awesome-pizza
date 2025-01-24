@@ -10,7 +10,7 @@ import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith({SpringExtension.class})
-public class LogInterceptorTest {
+class LogInterceptorTest {
   @InjectMocks
   private LogInterceptor underTest;
 

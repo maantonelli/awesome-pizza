@@ -2,14 +2,17 @@ package org.example.awesome.pizza.service.impl;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.assertj.core.api.Assertions;
+import org.example.awesome.pizza.domain.Customer;
 import org.example.awesome.pizza.domain.Order;
 import org.example.awesome.pizza.exception.BadRequestException;
 import org.example.awesome.pizza.exception.InternalServerErrorException;
 import org.example.awesome.pizza.exception.NotFoundException;
 import org.example.awesome.pizza.mapper.OrderMapper;
+import org.example.awesome.pizza.model.CustomerRequest;
 import org.example.awesome.pizza.model.OrderDto;
 import org.example.awesome.pizza.model.OrderInternalReq;
 import org.example.awesome.pizza.model.OrderStatus;
+import org.example.awesome.pizza.repository.CustomerRepository;
 import org.example.awesome.pizza.repository.OrderRepository;
 import org.example.awesome.pizza.state.OrderState;
 import org.instancio.Instancio;
@@ -65,9 +68,10 @@ class OrderServiceImplTest {
   private OrderRepository repository;
   @Spy
   private final OrderMapper mapper = Mappers.getMapper(OrderMapper.class);
-  //@Value("${awesome-pizza.config.cooking-threshold:1}")
   @Mock
   private OrderState orderState;
+  @Mock
+  private CustomerRepository customerRepo;
 
   @Test
   void findByCode_WhenInvalidInput_ShouldThrow() {
@@ -189,8 +193,9 @@ class OrderServiceImplTest {
   void updateOrder_WhenException_ShouldThrow(final Long id, final OrderStatus status, final Long chefId) {
     doThrow(new BadRequestException("Bad request")).when(orderState).handleState(any(), any());
 
+    final OrderInternalReq request = (OrderInternalReq) new OrderInternalReq().status(status);
     Assertions.assertThatExceptionOfType(BadRequestException.class)
-        .isThrownBy(() -> underTest.updateOrder(id, (OrderInternalReq) new OrderInternalReq().status(status), chefId));
+        .isThrownBy(() -> underTest.updateOrder(id, request, chefId));
 
     verify(orderState).handleState(any(), any());
   }
@@ -200,8 +205,9 @@ class OrderServiceImplTest {
   void updateOrder_WhenEmptyResult_ShouldThrow(final Long id, final OrderStatus status, final Long chefId) {
     doThrow(new InternalServerErrorException("Internal server error")).when(orderState).handleState(any(), any());
 
+    final OrderInternalReq request = (OrderInternalReq) new OrderInternalReq().status(status);
     Assertions.assertThatExceptionOfType(InternalServerErrorException.class)
-        .isThrownBy(() -> underTest.updateOrder(id, (OrderInternalReq) new OrderInternalReq().status(status), chefId));
+        .isThrownBy(() -> underTest.updateOrder(id, request, chefId));
 
     verify(orderState).handleState(any(), any());
   }
@@ -334,13 +340,38 @@ class OrderServiceImplTest {
     verify(mapper, never()).toDto(any());
   }
 
+  private static Stream<Arguments> save_InvalidCustomerParams() {
+    return Stream.of(
+        Arguments.of(new CustomerRequest())
+    );
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @MethodSource("save_InvalidCustomerParams")
+  void save_WhenInvalidCustomer_ShouldThrow(final CustomerRequest customer) {
+    final OrderInternalReq request = (OrderInternalReq) new OrderInternalReq().customer(customer);
+
+    Assertions.assertThatExceptionOfType(BadRequestException.class)
+        .isThrownBy(() -> underTest.save(request));
+
+    verify(mapper).toEntity(any());
+    verify(repository, never()).save(any());
+    verify(mapper, never()).toDto(any());
+  }
+
   @Test
   void save_WhenValidRequest_ShouldInsert() {
     final OrderInternalReq request = Instancio.of(OrderInternalReq.class)
-        .ignore(all(field(OrderInternalReq::getStatus), field(OrderInternalReq::getChefId)))
+        .ignore(all(field(OrderInternalReq::getStatus), field(OrderInternalReq::getChefId), field(CustomerRequest::getId)))
+        .create();
+    final Customer customer = Instancio.of(Customer.class)
+        .set(field(Customer::getUsername), request.getCustomer().getUsername())
         .create();
 
     doCallRealMethod().when(mapper).toEntity(any(OrderInternalReq.class));
+    doReturn(Optional.of(customer)).when(customerRepo).findByUsername(request.getCustomer().getUsername());
+    doReturn(customer).when(customerRepo).getReferenceById(customer.getId());
     doAnswer(invocation -> {
       final Order arg = invocation.getArgument(0, Order.class);
       arg.setCreatedDate(Instant.now());
@@ -357,11 +388,17 @@ class OrderServiceImplTest {
         .isNotNull()
         .matches(o -> Objects.equals(o.getStatus(), OrderStatus.CREATED))
         .matches(o -> Objects.equals(o.getPizzas().size(), request.getPizzas().size()))
+        .matches(o -> Objects.equals(o.getCustomer().getId(), customer.getId()))
+        .matches(o -> Objects.equals(o.getCustomer().getFirstName(), customer.getFirstName()))
+        .matches(o -> Objects.equals(o.getCustomer().getLastName(), customer.getLastName()))
+        .matches(o -> Objects.equals(o.getCustomer().getUsername(), customer.getUsername()))
         .matches(o -> Objects.nonNull(o.getCreatedDate()))
         .matches(o -> Objects.nonNull(o.getLastModifiedDate()))
         .matches(o -> Objects.nonNull(o.getCode()))
         .matches(o -> Objects.nonNull(o.getId()));
 
+    verify(customerRepo).findByUsername(request.getCustomer().getUsername());
+    verify(customerRepo).getReferenceById(customer.getId());
     verify(mapper).toEntity(any(OrderInternalReq.class));
     verify(repository).save(any(Order.class));
     verify(mapper).toDto(any(Order.class));
