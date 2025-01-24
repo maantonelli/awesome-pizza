@@ -1,0 +1,38 @@
+spring:
+  profile: local
+  jpa:
+    defer-datasource-initialization: true
+    spring.jpa.database-platform: org.hibernate.dialect.H2Dialect
+    generate-ddl: true
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: AWESOMESCHEMA
+        hbm2ddl:
+          create_namespaces: true
+    hibernate:
+      ddl-auto: update
+      autocommit: true
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MSSQLServer
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+
+awesome-pizza:
+  config:
+    cooking-threshold: 1
+    http-log: ${AWESOME_PIZZA_CONFIG_HTTP_LOG:true}
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: ${LOG_HIBERNATE_SQL:DEBUG}
+        type:
+          descriptor:
+            sql:
+              BasicBinder: ${LOG_HIBERNATE_DESCRIPTOR_SQL:TRACE}
+        orm:
+          jdbc:
+            bind: ${LOG_HIBERNATE_ORM_BIND:TRACE}

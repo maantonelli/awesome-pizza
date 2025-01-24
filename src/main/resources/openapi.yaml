@@ -1,0 +1,409 @@
+openapi: 3.0.3
+info:
+  title: Awesome Pizza - OpenAPI 3.0
+  description: |-
+    This is the OpenAPI for the Awesome Pizza online platform for consulting Pizzas on the menu and for managing and tracking customer's orders
+  contact:
+    email: mattia.antonelli89@gmail.com
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Pizza
+    description: Manages Pizza entity
+  - name: Order
+    description: Manages Order entity
+paths:
+  /pizza:
+    post:
+      tags:
+        - Pizza
+      summary: Insert new pizza in the menu
+      description: Insert new pizza entity in the DB based on input request
+      operationId: createPizza
+      requestBody:
+        $ref: '#/components/requestBodies/Pizza'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PizzaDto'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    get:
+      tags:
+        - Pizza
+      summary: Retrieve pizza by filters
+      description: Responses with all pizzas available in the menu corresponding to input filters
+      operationId: findPizzas
+      parameters:
+        - name: searchString
+          in: query
+          description: String to filter on both name or description
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Succesful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PizzaDto'
+        '500':
+          description: Internal server error
+  /pizza/{id}:
+    put:
+      tags:
+        - Pizza
+      summary: Updates a pizza
+      description: Modifies an existing pizza on the DB matching input ID
+      operationId: updatePizza
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        $ref: '#/components/requestBodies/Pizza'
+      responses:
+        '200':
+          description: Succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PizzaDto'
+        '404':
+          description: Pizza not found
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    delete:
+      tags:
+        - Pizza
+      summary: Deletes a pizza
+      description: Removes a pizza from the DB matching input ID
+      operationId: deletePizza
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Succesful operation
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /order:
+    post:
+      tags:
+        - Order
+      summary: Creates a new Order
+      description: Inserts a new Order entity on the DB
+      operationId: createOrders
+      requestBody:
+        $ref: '#/components/requestBodies/Order'
+      responses:
+        '201':
+          description: Succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDto'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    get:
+      tags:
+        - Order
+      summary: Retrieves a list of Orders
+      description: Responses with a list of Orders sorted by createdDate ascending
+      operationId: findOrders
+      parameters:
+        - $ref: '#/components/parameters/StatusesOptional'
+      responses:
+        '200':
+          description: Succesful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderDto'
+        '500':
+          description: Internal server error
+  /order/{id}:
+    get:
+      tags:
+        - Order
+      summary: Retrieves an order by ID
+      description: Responses with a single Order based on input ID
+      operationId: findOrderById
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDto'
+        '404':
+          description: Order not found
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    put:
+      tags:
+        - Order
+      summary: Updates an Order by its ID
+      description: Modifies an existing Order on the DB matching input ID
+      operationId: updateOrder
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/ChefId'
+      requestBody:
+        $ref: '#/components/requestBodies/Order'
+      responses:
+        '200':
+          description: Succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDto'
+        '400':
+          description: Bad request
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+  /order/code/{code}:
+    get:
+      tags:
+        - Order
+      summary: Retrieves an order by code
+      description: Responses with a single Order based on input code
+      operationId: findOrderByCode
+      parameters:
+        - $ref: '#/components/parameters/Code'
+      responses:
+        '200':
+          description: Succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDto'
+        '404':
+          description: Order not found
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /order/next:
+    patch:
+      tags:
+        - Order
+      summary: Take charge next order
+      description: Updates in DONE the status of current COOKING Order if there is any, and sets in COOKING the status of the Order corresponding to input id, when sended, otherwise of the next Order based on createdDate field, that is also returned in response
+      operationId: takeChargeNext
+      parameters:
+        - $ref: '#/components/parameters/IdOptional'
+        - $ref: '#/components/parameters/ChefIdRequired'
+      responses:
+        '200':
+          description: Succesful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDto'
+        '204':
+          description: No Order found to take in charge
+        '400':
+          description: Bad request
+        '409':
+          description: Conflict
+        '500':
+          description: Internal server error
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      description: ID of the entity
+      required: true
+      schema:
+        type: integer
+        format: int64
+        description: ID of the entity
+        example: 10
+    IdOptional:
+      name: id
+      in: query
+      description: ID of the entity optional
+      required: false
+      schema:
+        type: integer
+        format: int64
+        description: ID of the entity
+        example: 10
+    Code:
+      name: code
+      in: path
+      description: Code of the Order
+      required: true
+      schema:
+        type: integer
+        format: int64
+        description: Code of the order
+        example: 102
+    StatusesOptional:
+      name: statuses
+      in: query
+      description: Statuses of the order
+      required: false
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/OrderStatus'
+    StatusRequired:
+      name: status
+      in: query
+      description: Status of the order
+      required: true
+      schema:
+        $ref: '#/components/schemas/OrderStatus'
+    ChefIdRequired:
+      name: X-Chef-ID
+      in: header
+      description: ID of the Pizza Chef
+      required: true
+      schema:
+        type: integer
+        format: int64
+        example: 5
+    ChefId:
+      name: X-Chef-ID
+      in: header
+      description: ID of the Pizza Chef
+      required: false
+      schema:
+        type: integer
+        format: int64
+        example: 5
+  schemas:
+    BaseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID of the entity
+          example: 10
+        createdDate:
+          type: string
+          format: date-time
+          description: Creation date of the entity
+          example: '2025-01-23T17:41:09'
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: Last modification date of the entity
+          example: '2025-01-23T17:41:09'
+    PizzaRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the pizza
+          nullable: false
+          example: 'Margherita'
+        description:
+          type: string
+          description: Description of the pizza
+          nullable: false
+          example: 'Pomodoro, mozzarella, basilico'
+        price:
+          type: number
+          description: Price of the pizza
+          nullable: false
+          example: 5.5
+      required:
+        - name
+        - description
+        - price
+    PizzaDto:
+      allOf:
+        - $ref: '#/components/schemas/BaseDto'
+        - $ref: '#/components/schemas/PizzaRequest'
+
+    OrderStatus:
+      type: string
+      enum:
+        - CREATED
+        - COOKING
+        - DONE
+        - CANCELED
+    OrderRequest:
+      type: object
+      properties:
+        pizzas:
+          type: array
+          items:
+            #$ref: '#/components/schemas/PizzaDto'
+            type: integer
+            format: int64
+            description: ID of the pizza
+          minItems: 1
+          description: List of ID related to ordered pizzas from customer
+          example:
+            - 3
+            - 12
+            - 7
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+          default: CREATED
+      required:
+        - pizzas
+    OrderDto:
+      allOf:
+        - $ref: '#/components/schemas/BaseDto'
+        - type: object
+          properties:
+            code:
+              type: integer
+              format: int64
+              description: Code of the order
+              example: 12
+            pizzas:
+              type: array
+              items:
+                $ref: '#/components/schemas/PizzaDto'
+              minItems: 1
+              nullable: false
+              description: List of ordered pizzas from customer
+            totalAmount:
+              type: number
+              description: Total amount of the order
+              example: 38.9
+            status:
+              $ref: '#/components/schemas/OrderStatus'
+
+  requestBodies:
+    Pizza:
+      description: Pizza object to be added to the DB
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PizzaRequest'
+    Order:
+      description: Order object to be added by customer
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OrderRequest'
