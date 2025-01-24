@@ -1,0 +1,10 @@
+services:
+  awesome-pizza-app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      LOG_HIBERNATE_SQL: ERROR
+      LOG_HIBERNATE_DESCRIPTOR_SQL: ERROR
+      LOG_HIBERNATE_ORM_BIND: ERROR
+      AWESOME_PIZZA_CONFIG_HTTP_LOG: true
